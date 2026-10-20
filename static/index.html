@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f5f8">
+  <title>Motion Control Studio</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f5f8; --panel: #fff; --text: #20242e; --muted: #6f7786;
+      --border: #e1e5ec; --accent: #6658db; --accent-strong: #5143c4;
+      --soft: #f0efff; --good: #147a4b; --warn: #9a6211; --bad: #b23d47;
+      --shadow: 0 12px 32px rgba(31, 37, 55, .06);
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #12141a; --panel: #1b1e27; --text: #edf0f6; --muted: #a1a8b7;
+      --border: #303542; --accent: #a59aff; --accent-strong: #b9b1ff;
+      --soft: #2a2741; --good: #61d49b; --warn: #ffca70; --bad: #ff8990;
+      --shadow: 0 12px 32px rgba(0, 0, 0, .18);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    button, input, select, textarea { font: inherit; }
+    .shell { max-width: 1040px; margin: auto; padding: 28px 22px 72px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .mark { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; background: var(--soft); color: var(--accent); font-size: 21px; }
+    h1 { margin: 0; font-size: clamp(20px, 4vw, 26px); letter-spacing: -.035em; }
+    .subtitle { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+    .theme { border: 1px solid var(--border); color: var(--text); background: var(--panel); border-radius: 10px; padding: 9px 12px; cursor: pointer; }
+    .notice { border: 1px solid #dfd9ff; border-radius: 12px; background: var(--soft); color: var(--text); padding: 13px 16px; margin: 0 0 18px; font-size: 13px; }
+    [data-theme="dark"] .notice { border-color: var(--border); }
+    .notice strong { color: var(--accent); }
+    .health { display: grid; gap: 8px; margin-bottom: 22px; }
+    .health-item { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); padding: 10px 13px; color: var(--muted); font-size: 13px; }
+    .health-item.ok { color: var(--good); } .health-item.missing { color: var(--warn); }
+    .health-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; background: currentColor; }
+    .health-name { color: var(--text); font-weight: 650; margin-right: 5px; }
+    .card { border: 1px solid var(--border); border-radius: 17px; background: var(--panel); box-shadow: var(--shadow); padding: clamp(18px, 4vw, 30px); margin-bottom: 18px; }
+    .section-heading { margin: 0 0 5px; font-size: 17px; letter-spacing: -.02em; }
+    .section-help { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+    .uploads { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .upload { display: block; border: 1px dashed var(--border); border-radius: 13px; background: color-mix(in srgb, var(--panel), var(--bg) 35%); padding: 17px; cursor: pointer; transition: border-color .15s, background .15s; }
+    .upload:hover, .upload:focus-within { border-color: var(--accent); }
+    .upload input { width: 100%; margin-top: 12px; color: var(--muted); font-size: 12px; }
+    .upload-title { display: block; font-weight: 650; }
+    .upload-hint { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+    fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+    legend, .label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 650; }
+    .choices { display: flex; flex-wrap: wrap; gap: 9px; }
+    .choice { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 9px; padding: 8px 11px; cursor: pointer; font-size: 13px; }
+    .choice:has(input:checked) { border-color: var(--accent); background: var(--soft); }
+    input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
+    .field { margin: 18px 0; }
+    select, textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--text); padding: 10px 12px; }
+    textarea { min-height: 112px; resize: vertical; }
+    .fine { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
+    .lite-note { display: none; border-left: 3px solid var(--warn); padding: 8px 11px; background: var(--bg); color: var(--muted); font-size: 12px; }
+    .lite-note.show { display: block; }
+    .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .primary, .secondary { border: 0; border-radius: 10px; padding: 11px 17px; font-weight: 650; cursor: pointer; }
+    .primary { background: var(--accent); color: #fff; }
+    .primary:hover:not(:disabled) { background: var(--accent-strong); }
+    .secondary { border: 1px solid var(--border); background: var(--panel); color: var(--text); }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    .status { color: var(--muted); font-size: 13px; }
+    .progress-wrap { display: none; margin-top: 20px; }
+    .progress-wrap.show { display: block; }
+    .progress-label { display: flex; justify-content: space-between; gap: 14px; margin-bottom: 8px; color: var(--muted); font-size: 13px; }
+    progress { display: block; width: 100%; height: 9px; border: 0; border-radius: 99px; overflow: hidden; accent-color: var(--accent); }
+    progress::-webkit-progress-bar { background: var(--bg); border-radius: 99px; }
+    progress::-webkit-progress-value { background: var(--accent); border-radius: 99px; }
+    progress::-moz-progress-bar { background: var(--accent); border-radius: 99px; }
+    .error { color: var(--bad); }
+    .result { display: none; }
+    .result.show { display: block; }
+    .result video { width: 100%; max-height: 560px; border-radius: 12px; background: #090a0d; }
+    .download { display: inline-block; margin-top: 12px; color: var(--accent); font-weight: 650; }
+    footer { margin: 28px 4px 0; text-align: center; color: var(--muted); font-size: 12px; }
+    @media (max-width: 640px) { .shell { padding: 20px 14px 44px; } .uploads, .controls { grid-template-columns: 1fr; } header { align-items: flex-start; } .card { border-radius: 13px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand">
+        <div class="mark" aria-hidden="true">✳</div>
+        <div><h1>Motion Control Studio</h1><p class="subtitle">Local character motion transfer</p></div>
+      </div>
+      <button class="theme" id="theme" type="button" aria-label="Toggle light and dark theme">◐ <span>Theme</span></button>
+    </header>
+    <div class="notice"><strong>Open-source approximation — not Kling.</strong> Generation runs through your local ComfyUI workflow. Lite is a low quality preview, not a diffusion model.</div>
+    <section aria-label="Local service health" class="health" id="health"><div class="health-item">Checking local services…</div></section>
+
+    <form class="card" id="form">
+      <h2 class="section-heading">01 &nbsp; Add your references</h2>
+      <p class="section-help">Choose a character image and a short motion reference. Your files stay on this computer.</p>
+      <div class="uploads">
+        <label class="upload"><span class="upload-title">Character image</span><span class="upload-hint">PNG or JPG · visible person/character · up to 20 MB</span><input id="character" name="character" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" required></label>
+        <label class="upload"><span class="upload-title">Motion video</span><span class="upload-hint">MP4 or MOV · up to 10 seconds · max 50 MB</span><input id="motion" name="motion" type="file" accept=".mp4,.mov,video/mp4,video/quicktime" required></label>
+      </div>
+      <div class="controls">
+        <fieldset><legend>Character orientation</legend><div class="choices">
+          <label class="choice"><input type="radio" name="orientation" value="image" checked> Follow image</label>
+          <label class="choice"><input type="radio" name="orientation" value="video"> Follow video</label>
+        </div><p class="fine">Full mode passes this to an optional orientation node. Lite is a 2D pose preview.</p></fieldset>
+        <fieldset><legend>Original audio</legend><label class="choice"><input id="keep-audio" type="checkbox" checked> Keep audio from reference video</label></fieldset>
+      </div>
+      <div class="field">
+        <label class="label" for="backend">Generation backend</label>
+        <select id="backend"><option value="full">Full · local ComfyUI + Wan workflow</option><option value="lite">Lite · low quality preview (no GPU required)</option></select>
+        <p class="lite-note" id="lite-note">Low quality preview: tracks body pose and warps your image in 2D. Results can look rough or drift; this is not AI video generation.</p>
+      </div>
+      <div class="actions"><button class="primary" id="prepare" type="submit">Analyze references</button><span class="status" id="prepare-status" role="status"></span></div>
+    </form>
+
+    <section class="card" id="prompt-card" hidden>
+      <h2 class="section-heading">02 &nbsp; Review the generation prompt</h2>
+      <p class="section-help" id="descriptions"></p>
+      <label class="label" for="prompt">Edit prompt before generation</label>
+      <textarea id="prompt" maxlength="2000"></textarea>
+      <div class="actions"><button class="primary" id="generate" type="button">Generate video</button><span class="status" id="generate-status" role="status"></span></div>
+    </section>
+
+    <section class="card" id="progress-card" hidden aria-live="polite">
+      <h2 class="section-heading">03 &nbsp; Generation progress</h2>
+      <div class="progress-wrap show" id="progress-wrap">
+        <div class="progress-label"><span id="progress-message">Starting…</span><span id="progress-number">0%</span></div>
+        <progress id="progress" max="100" value="0">0%</progress>
+      </div>
+      <div class="actions"><button class="secondary" id="cancel" type="button">Cancel generation</button><span class="status" id="job-status" role="status"></span></div>
+    </section>
+
+    <section class="card result" id="result-card">
+      <h2 class="section-heading">Your result</h2>
+      <p class="section-help" id="result-caption"></p>
+      <video id="result-video" controls playsinline></video>
+      <a class="download" id="download" download="motion-control-result.mp4">Download MP4 ↗</a>
+    </section>
+    <footer>Private by default: Ollama, ComfyUI, and uploaded files are processed locally.</footer>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let preparedId = null;
+    let activeJobId = null;
+    let pollTimer = null;
+    const savedTheme = localStorage.getItem("motion-studio-theme");
+    if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+    $("theme").addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem("motion-studio-theme", next);
+    });
+    $("backend").addEventListener("change", () => $("lite-note").classList.toggle("show", $("backend").value === "lite"));
+    function showHealth(checks) {
+      $("health").replaceChildren(...checks.map((check) => {
+        const item = document.createElement("div");
+        item.className = `health-item ${check.status === "ok" ? "ok" : "missing"}`;
+        const dot = document.createElement("span"); dot.className = "health-dot";
+        const content = document.createElement("span");
+        const name = document.createElement("span"); name.className = "health-name"; name.textContent = check.name;
+        const message = document.createElement("span"); message.textContent = check.message;
+        content.append(name, message); item.append(dot, content); return item;
+      }));
+    }
+    async function refreshHealth() {
+      try {
+        const response = await fetch("/api/health");
+        if (!response.ok) throw new Error(`Health check failed (${response.status})`);
+        showHealth((await response.json()).checks);
+      } catch (error) {
+        showHealth([{name: "Local server", status: "missing", message: error.message}]);
+      }
+    }
+    refreshHealth();
+    $("form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      $("prepare").disabled = true; $("prepare-status").textContent = "Extracting reference frames and asking Ollama…";
+      $("prepare-status").classList.remove("error"); $("prompt-card").hidden = true; $("result-card").classList.remove("show");
+      const character = $("character").files[0], motion = $("motion").files[0];
+      if (!character || !motion) { $("prepare-status").textContent = "Select both files first."; $("prepare-status").classList.add("error"); $("prepare").disabled = false; return; }
+      if (character.size > 20 * 1024 * 1024) { $("prepare-status").textContent = "Character image exceeds the 20 MB limit."; $("prepare-status").classList.add("error"); $("prepare").disabled = false; return; }
+      if (motion.size > 50 * 1024 * 1024) { $("prepare-status").textContent = "Motion video exceeds the 50 MB limit."; $("prepare-status").classList.add("error"); $("prepare").disabled = false; return; }
+      const body = new FormData();
+      body.append("character", character); body.append("motion", motion);
+      body.append("orientation", document.querySelector('input[name="orientation"]:checked').value);
+      body.append("keep_audio", $("keep-audio").checked);
+      try {
+        const response = await fetch("/api/prepare", {method: "POST", body});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Could not analyze the references.");
+        preparedId = data.prepared_id; $("prompt").value = data.generation_prompt;
+        $("descriptions").textContent = `${data.character_description} ${data.motion_description}`;
+        $("prompt-card").hidden = false; $("prepare-status").textContent = "References analyzed. Review and edit the prompt below.";
+      } catch (error) { $("prepare-status").textContent = error.message; $("prepare-status").classList.add("error"); }
+      finally { $("prepare").disabled = false; }
+    });
+    $("generate").addEventListener("click", async () => {
+      $("generate").disabled = true; $("generate-status").textContent = "Starting local generation…";
+      $("generate-status").classList.remove("error");
+      try {
+        const response = await fetch("/api/generate", {method: "POST", headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({prepared_id: preparedId, backend: $("backend").value, prompt: $("prompt").value})});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Could not start generation.");
+        activeJobId = data.job_id; $("progress-card").hidden = false; $("progress").value = 0;
+        $("job-status").textContent = ""; $("result-card").classList.remove("show");
+        pollTimer = setInterval(pollJob, 1000); pollJob();
+      } catch (error) { $("generate-status").textContent = error.message; $("generate-status").classList.add("error"); $("generate").disabled = false; }
+    });
+    async function pollJob() {
+      if (!activeJobId) return;
+      try {
+        const response = await fetch(`/api/jobs/${activeJobId}`);
+        const job = await response.json();
+        if (!response.ok) throw new Error(job.detail || "Could not read job status.");
+        $("progress").value = job.progress; $("progress-number").textContent = `${job.progress}%`;
+        $("progress-message").textContent = job.message;
+        if (job.state === "completed") {
+          clearInterval(pollTimer); $("cancel").disabled = true;
+          $("result-video").src = job.video_url; $("download").href = job.download_url;
+          $("result-caption").textContent = $("backend").value === "lite" ? "Low quality preview" : "Generated by your local ComfyUI workflow.";
+          $("result-card").classList.add("show"); $("job-status").textContent = "Done.";
+          $("generate").disabled = false;
+        } else if (job.state === "failed" || job.state === "canceled") {
+          clearInterval(pollTimer); $("cancel").disabled = true; $("job-status").textContent = job.error || job.message;
+          $("job-status").classList.add("error"); $("generate").disabled = false;
+        }
+      } catch (error) {
+        clearInterval(pollTimer); $("job-status").textContent = error.message;
+        $("job-status").classList.add("error"); $("generate").disabled = false;
+      }
+    }
+    $("cancel").addEventListener("click", async () => {
+      if (!activeJobId) return;
+      $("cancel").disabled = true;
+      try {
+        const response = await fetch(`/api/jobs/${activeJobId}/cancel`, {method: "POST"});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Could not cancel generation.");
+        $("job-status").textContent = data.message;
+      } catch (error) { $("job-status").textContent = error.message; $("job-status").classList.add("error"); $("cancel").disabled = false; }
+    });
+  </script>
+</body>
+</html>
